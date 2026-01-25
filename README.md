@@ -22,4 +22,4 @@ Permite gestionar menú, órdenes, inventario y generar reportes de ventas.
 - Paquetes: Solo librerías estándar de Go
 
 ## Autor
-Luis - UIDE 2026
+Luis Agapito - UIDE 2026
