@@ -5,6 +5,7 @@ import (
 
 	"github.com/perluis/burger-system/menu"
 	"github.com/perluis/burger-system/orders"
+	"github.com/perluis/burger-system/utils"
 )
 
 func main() {
@@ -64,14 +65,14 @@ func main() {
 	fmt.Println("➕ AGREGANDO ITEMS A LA ORDEN...")
 	fmt.Println()
 
-	err = orden.AgregarItem(clasica.ID, clasica.Nombre, 2, clasica.Precio, "sin cebolla")
+	err = orden.AgregarItem(clasica.GetID(), clasica.Nombre, 2, clasica.Precio, "sin cebolla")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
 	}
 	fmt.Println("✅ Agregado: 2x Hamburguesa Clásica")
 
-	err = orden.AgregarItem(premium.ID, premium.Nombre, 1, premium.Precio, "")
+	err = orden.AgregarItem(premium.GetID(), premium.Nombre, 1, premium.Precio, "")
 	if err != nil {
 		fmt.Println("Error:", err)
 		return
@@ -116,4 +117,27 @@ func main() {
 	fmt.Println("║  RESUMEN FINAL                            ║")
 	fmt.Println("╚════════════════════════════════════════════╝")
 	fmt.Println(orden.ObtenerInfo())
+
+	// ========== DEMOSTRACIÓN DE INTERFACES ==========
+	fmt.Println()
+	fmt.Println("╔════════════════════════════════════════════╗")
+	fmt.Println("║  DEMOSTRACIÓN DE INTERFACES               ║")
+	fmt.Println("╚════════════════════════════════════════════╝")
+	fmt.Println()
+
+	// Polimorfismo: MostrarID acepta cualquier Identificable
+	fmt.Println("🔍 Mostrando IDs usando interface Identificable:")
+	utils.MostrarID(clasica)
+	utils.MostrarID(premium)
+	fmt.Println()
+
+	// Validación usando interface Validable
+	fmt.Println("✓ Validando hamburguesas usando interface Validable:")
+	utils.ValidarEntidad(clasica)
+	utils.ValidarEntidad(premium)
+	fmt.Println()
+
+	// Mostrar información usando interface Informable
+	fmt.Println("📄 Mostrando información usando interface Informable:")
+	utils.MostrarInformacion(clasica)
 }

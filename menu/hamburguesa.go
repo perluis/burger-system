@@ -7,17 +7,16 @@ import (
 )
 
 // Hamburguesa representa un producto del menú del restaurante.
-// Incluye toda la información necesaria para gestión de inventario,
-// pricing y disponibilidad en tiempo real.
+// Utiliza encapsulación para proteger campos críticos como ID y FechaCreado.
 type Hamburguesa struct {
-	ID           string // Formato: BURG-001, BURG-002, etc.
-	Nombre       string
-	Descripcion  string
-	Precio       float64 // Precio en USD
-	Categoria    string  // Valores permitidos: "Clasica", "Premium", "Vegetariana"
-	Ingredientes []string
-	Disponible   bool // false cuando está temporalmente agotada
-	FechaCreado  time.Time
+	id           string    // Privado - no se puede cambiar desde fuera
+	Nombre       string    // Público
+	Descripcion  string    // Público
+	Precio       float64   // Público - se modifica con ActualizarPrecio()
+	Categoria    string    // Público
+	Ingredientes []string  // Público
+	Disponible   bool      // Público - se modifica con MarcarDisponibilidad()
+	fechaCreado  time.Time // Privado - solo lectura
 }
 
 // NuevaHamburguesa crea y retorna una nueva hamburguesa con ID autogenerado.
@@ -48,15 +47,16 @@ func NuevaHamburguesa(nombre, descripcion string, precio float64, categoria stri
 
 	// Crear y retornar la hamburguesa
 	return &Hamburguesa{
-		ID:           id,
+		id:           id, // Minúscula
 		Nombre:       nombre,
 		Descripcion:  descripcion,
 		Precio:       precio,
 		Categoria:    categoria,
 		Ingredientes: ingredientes,
 		Disponible:   true,
-		FechaCreado:  time.Now(),
+		fechaCreado:  time.Now(), // Minúscula
 	}, nil
+
 }
 
 // Contador global para generación de IDs
@@ -67,6 +67,16 @@ var contadorID = 0
 func generarID() string {
 	contadorID++
 	return "BURG-" + fmt.Sprintf("%03d", contadorID)
+}
+
+// GetID retorna el ID de la hamburguesa (solo lectura)
+func (h *Hamburguesa) GetID() string {
+	return h.id
+}
+
+// GetFechaCreado retorna la fecha de creación (solo lectura)
+func (h *Hamburguesa) GetFechaCreado() time.Time {
+	return h.fechaCreado
 }
 
 // ActualizarPrecio cambia el precio de la hamburguesa.
@@ -93,11 +103,23 @@ func (h *Hamburguesa) ObtenerInfo() string {
 
 	return fmt.Sprintf(
 		"[%s] %s - $%.2f (%s)\n  %s\n  Ingredientes: %v",
-		h.ID,
+		h.id,
 		h.Nombre,
 		h.Precio,
 		estado,
 		h.Descripcion,
 		h.Ingredientes,
 	)
+}
+
+// Validar verifica que la hamburguesa tenga datos válidos
+// Implementa la interface Validable
+func (h *Hamburguesa) Validar() error {
+	if h.Nombre == "" {
+		return errors.New("el nombre no puede estar vacío")
+	}
+	if h.Precio <= 0 {
+		return errors.New("el precio debe ser mayor a 0")
+	}
+	return nil
 }
