@@ -94,8 +94,8 @@ func (o *Orden) calcularTotales() {
 	}
 
 	o.Subtotal = subtotal
-	// IVA 12% (Ecuador)
-	o.Total = subtotal * 1.12
+	// IVA 15% (Ecuador)
+	o.Total = subtotal * 1.15
 }
 
 // ActualizarEstado cambia el estado de la orden
