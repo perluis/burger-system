@@ -23,13 +23,19 @@ func main() {
 	// Definir rutas
 	router.HandleFunc("/api/hamburguesas", server.GetHamburguesas).Methods("GET")
 	router.HandleFunc("/api/hamburguesas/{id}", server.GetHamburguesaByID).Methods("GET")
+	router.HandleFunc("/api/hamburguesas", server.CreateHamburguesa).Methods("POST")
+	router.HandleFunc("/api/hamburguesas/{id}", server.UpdateHamburguesa).Methods("PUT")
+	router.HandleFunc("/api/hamburguesas/{id}", server.DeleteHamburguesa).Methods("DELETE")
 
 	// Ruta raíz (página de bienvenida)
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "🍔 API Restaurante de Hamburguesas\n\n")
 		fmt.Fprintf(w, "Endpoints disponibles:\n")
-		fmt.Fprintf(w, "GET /api/hamburguesas - Listar todas las hamburguesas\n")
-		fmt.Fprintf(w, "GET /api/hamburguesas/{id} - Obtener hamburguesa por ID\n")
+		fmt.Fprintf(w, "GET    /api/hamburguesas     - Listar todas\n")
+		fmt.Fprintf(w, "GET    /api/hamburguesas/{id} - Obtener por ID\n")
+		fmt.Fprintf(w, "POST   /api/hamburguesas     - Crear nueva\n")
+		fmt.Fprintf(w, "PUT    /api/hamburguesas/{id} - Actualizar\n")
+		fmt.Fprintf(w, "DELETE /api/hamburguesas/{id} - Eliminar\n")
 	})
 
 	// Iniciar servidor

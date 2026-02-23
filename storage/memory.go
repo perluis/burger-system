@@ -76,3 +76,41 @@ func (s *Store) GetHamburguesaByID(id string) *menu.Hamburguesa {
 	}
 	return nil
 }
+
+// AddHamburguesa agrega una nueva hamburguesa
+func (s *Store) AddHamburguesa(h *menu.Hamburguesa) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.hamburguesas = append(s.hamburguesas, h)
+}
+
+// UpdateHamburguesa actualiza una hamburguesa existente
+func (s *Store) UpdateHamburguesa(id string, nombre, descripcion string, precio float64) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, h := range s.hamburguesas {
+		if h.GetID() == id {
+			h.Nombre = nombre
+			h.Descripcion = descripcion
+			h.ActualizarPrecio(precio)
+			return true
+		}
+	}
+	return false
+}
+
+// DeleteHamburguesa elimina una hamburguesa por ID
+func (s *Store) DeleteHamburguesa(id string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i, h := range s.hamburguesas {
+		if h.GetID() == id {
+			// Eliminar del slice
+			s.hamburguesas = append(s.hamburguesas[:i], s.hamburguesas[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
