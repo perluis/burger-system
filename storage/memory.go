@@ -4,11 +4,13 @@ import (
 	"sync"
 
 	"github.com/perluis/burger-system/menu"
+	"github.com/perluis/burger-system/orders"
 )
 
 // Store maneja el almacenamiento en memoria
 type Store struct {
 	hamburguesas []*menu.Hamburguesa
+	ordenes      []*orders.Orden
 	mu           sync.RWMutex // Para acceso concurrente seguro
 }
 
@@ -110,6 +112,40 @@ func (s *Store) DeleteHamburguesa(id string) bool {
 			// Eliminar del slice
 			s.hamburguesas = append(s.hamburguesas[:i], s.hamburguesas[i+1:]...)
 			return true
+		}
+	}
+	return false
+}
+
+// AddOrden agrega una nueva orden
+func (s *Store) AddOrden(o *orders.Orden) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.ordenes = append(s.ordenes, o)
+}
+
+// GetOrdenByID busca una orden por ID
+func (s *Store) GetOrdenByID(id string) *orders.Orden {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	for _, o := range s.ordenes {
+		if o.ID == id {
+			return o
+		}
+	}
+	return nil
+}
+
+// UpdateOrdenEstado actualiza el estado de una orden
+func (s *Store) UpdateOrdenEstado(id string, nuevoEstado string) bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for _, o := range s.ordenes {
+		if o.ID == id {
+			err := o.ActualizarEstado(nuevoEstado)
+			return err == nil
 		}
 	}
 	return false
