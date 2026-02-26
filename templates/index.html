@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍔 Sistema de Gestión - Restaurante</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { background: linear-gradient(135deg, #ff6b35, #f7c59f); }
+        .card { transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .precio { font-size: 1.5rem; color: #28a745; font-weight: bold; }
+        .categoria-badge { position: absolute; top: 10px; right: 10px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">🍔 Burger System</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" onclick="mostrarSeccion('hamburguesas')">
+                            <i class="bi bi-list"></i> Menú
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('nueva-hamburguesa')">
+                            <i class="bi bi-plus-circle"></i> Nueva Hamburguesa
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('nueva-orden')">
+                            <i class="bi bi-cart"></i> Nueva Orden
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div id="alertas"></div>
+
+        <section id="seccion-hamburguesas">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="bi bi-list"></i> Menú de Hamburguesas</h2>
+                <button class="btn btn-success" onclick="cargarHamburguesas()">
+                    <i class="bi bi-arrow-clockwise"></i> Actualizar
+                </button>
+            </div>
+            <div id="lista-hamburguesas" class="row"></div>
+        </section>
+
+        <section id="seccion-nueva-hamburguesa" style="display: none;">
+            <h2><i class="bi bi-plus-circle"></i> Crear Nueva Hamburguesa</h2>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <form id="form-hamburguesa">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" class="form-control" id="h-nombre" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descripción</label>
+                            <textarea class="form-control" id="h-descripcion" rows="2"></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Precio ($)</label>
+                                <input type="number" step="0.01" class="form-control" id="h-precio" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <select class="form-select" id="h-categoria" required>
+                                    <option value="Clasica">Clásica</option>
+                                    <option value="Premium">Premium</option>
+                                    <option value="Vegetariana">Vegetariana</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Ingredientes (separados por coma)</label>
+                            <input type="text" class="form-control" id="h-ingredientes" placeholder="carne, queso, lechuga, tomate">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Guardar Hamburguesa
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section id="seccion-nueva-orden" style="display: none;">
+            <h2><i class="bi bi-cart"></i> Crear Nueva Orden</h2>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <form id="form-orden">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Tipo de Orden</label>
+                                <select class="form-select" id="o-tipo" required>
+                                    <option value="mesa">Mesa</option>
+                                    <option value="delivery">Delivery</option>
+                                    <option value="para_llevar">Para Llevar</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Número de Mesa</label>
+                                <input type="number" class="form-control" id="o-mesa" value="1">
+                            </div>
+                        </div>
+                        <h5 class="mt-3">Items de la Orden</h5>
+                        <div id="items-orden"></div>
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="agregarItemOrden()">
+                            <i class="bi bi-plus"></i> Agregar Item
+                        </button>
+                        <hr>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle"></i> Crear Orden
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_URL = 'http://localhost:8080/api';
+        let hamburguesasDisponibles = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            cargarHamburguesas();
+        });
+
+        function mostrarSeccion(seccion) {
+            document.getElementById('seccion-hamburguesas').style.display = 'none';
+            document.getElementById('seccion-nueva-hamburguesa').style.display = 'none';
+            document.getElementById('seccion-nueva-orden').style.display = 'none';
+            document.getElementById('seccion-' + seccion).style.display = 'block';
+            if (seccion === 'nueva-orden') {
+                cargarSelectHamburguesas();
+                if (document.getElementById('items-orden').children.length === 0) {
+                    agregarItemOrden();
+                }
+            }
+        }
+
+        function mostrarAlerta(mensaje, tipo) {
+            tipo = tipo || 'success';
+            var alertas = document.getElementById('alertas');
+            alertas.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' + mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function() { alertas.innerHTML = ''; }, 5000);
+        }
+
+        function cargarHamburguesas() {
+            fetch(API_URL + '/hamburguesas')
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(hamburguesas) {
+                    hamburguesasDisponibles = hamburguesas;
+                    var lista = document.getElementById('lista-hamburguesas');
+                    lista.innerHTML = '';
+
+                    if (hamburguesas.length === 0) {
+                        lista.innerHTML = '<div class="col-12"><p class="text-muted">No hay hamburguesas registradas.</p></div>';
+                        return;
+                    }
+
+                    var categoriaColor = {
+                        'Clasica': 'primary',
+                        'Premium': 'warning',
+                        'Vegetariana': 'success'
+                    };
+
+                    var imagenes = {
+                        'Hamburguesa Clásica': '/static/img/clasica.png',
+                        'BBQ Premium': '/static/img/premium.png',
+                        'Veggie Deluxe': '/static/img/vegetariana.png',
+                        'Hamburguesa Mexicana': '/static/img/mexicana.png'
+                    };
+
+                    var imagenDefault = {
+                        'Clasica': '/static/img/clasica.png',
+                        'Premium': '/static/img/premium.png',
+                        'Vegetariana': '/static/img/vegetariana.png'
+                    };
+
+                    for (var i = 0; i < hamburguesas.length; i++) {
+                        var h = hamburguesas[i];
+                        var color = categoriaColor[h.Categoria] || 'secondary';
+                        var imagen = imagenes[h.Nombre] || imagenDefault[h.Categoria] || '/static/img/clasica.png';
+                        var ingredientes = h.Ingredientes ? h.Ingredientes.join(', ') : 'N/A';
+                        var disponibleBadge = h.Disponible ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-danger">No disponible</span>';
+
+                        var card = '<div class="col-md-4 mb-4">' +
+                            '<div class="card h-100 position-relative">' +
+                            '<span class="badge bg-' + color + ' categoria-badge">' + h.Categoria + '</span>' +
+                            '<img src="' + imagen + '" class="card-img-top" alt="' + h.Nombre + '" style="height: 200px; object-fit: cover;">' +
+                            '<div class="card-body">' +
+                            '<h5 class="card-title">' + h.Nombre + '</h5>' +
+                            '<p class="card-text text-muted">' + (h.Descripcion || 'Sin descripción') + '</p>' +
+                            '<p class="precio">$' + h.Precio.toFixed(2) + '</p>' +
+                            '<p class="small"><strong>Ingredientes:</strong> ' + ingredientes + '</p>' +
+                            '</div>' +
+                            '<div class="card-footer bg-white">' + disponibleBadge + '</div>' +
+                            '</div>' +
+                            '</div>';
+
+                        lista.innerHTML += card;
+                    }
+                })
+                .catch(function(error) {
+                    mostrarAlerta('Error cargando hamburguesas: ' + error.message, 'danger');
+                });
+        }
+
+        function cargarSelectHamburguesas() {
+            var selects = document.querySelectorAll('.select-hamburguesa');
+            for (var j = 0; j < selects.length; j++) {
+                var select = selects[j];
+                var valorActual = select.value;
+                select.innerHTML = '<option value="">Seleccionar hamburguesa...</option>';
+                for (var i = 0; i < hamburguesasDisponibles.length; i++) {
+                    var h = hamburguesasDisponibles[i];
+                    var id = 'BURG-' + String(i + 1).padStart(3, '0');
+                    select.innerHTML += '<option value="' + id + '">' + h.Nombre + ' - $' + h.Precio.toFixed(2) + '</option>';
+                }
+                if (valorActual) select.value = valorActual;
+            }
+        }
+
+        var itemCount = 0;
+        function agregarItemOrden() {
+            itemCount++;
+            var container = document.getElementById('items-orden');
+            var div = document.createElement('div');
+            div.className = 'row mb-2 item-orden';
+            div.innerHTML = '<div class="col-md-5"><select class="form-select select-hamburguesa" name="hamburguesa-' + itemCount + '" required><option value="">Seleccionar hamburguesa...</option></select></div>' +
+                '<div class="col-md-2"><input type="number" class="form-control" name="cantidad-' + itemCount + '" value="1" min="1" placeholder="Cant."></div>' +
+                '<div class="col-md-4"><input type="text" class="form-control" name="notas-' + itemCount + '" placeholder="Notas (opcional)"></div>' +
+                '<div class="col-md-1"><button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest(\'.item-orden\').remove()"><i class="bi bi-trash"></i></button></div>';
+            container.appendChild(div);
+            cargarSelectHamburguesas();
+        }
+
+        document.getElementById('form-hamburguesa').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var ingredientesRaw = document.getElementById('h-ingredientes').value;
+            var ingredientes = ingredientesRaw.split(',').map(function(i) { return i.trim(); }).filter(function(i) { return i; });
+
+            var data = {
+                nombre: document.getElementById('h-nombre').value,
+                descripcion: document.getElementById('h-descripcion').value,
+                precio: parseFloat(document.getElementById('h-precio').value),
+                categoria: document.getElementById('h-categoria').value,
+                ingredientes: ingredientes
+            };
+
+            fetch(API_URL + '/hamburguesas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    mostrarAlerta('✅ Hamburguesa creada exitosamente!');
+                    document.getElementById('form-hamburguesa').reset();
+                    cargarHamburguesas();
+                    mostrarSeccion('hamburguesas');
+                } else {
+                    return response.json().then(function(err) {
+                        mostrarAlerta('Error: ' + err.error, 'danger');
+                    });
+                }
+            })
+            .catch(function(error) {
+                mostrarAlerta('Error: ' + error.message, 'danger');
+            });
+        });
+
+        document.getElementById('form-orden').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var items = [];
+            var itemElements = document.querySelectorAll('.item-orden');
+            for (var i = 0; i < itemElements.length; i++) {
+                var item = itemElements[i];
+                var select = item.querySelector('select');
+                var cantidad = item.querySelector('input[type="number"]');
+                var notas = item.querySelector('input[type="text"]');
+                if (select.value) {
+                    items.push({
+                        hamburguesaID: select.value,
+                        cantidad: parseInt(cantidad.value) || 1,
+                        notas: notas.value || ''
+                    });
+                }
+            }
+
+            if (items.length === 0) {
+                mostrarAlerta('Debe agregar al menos un item a la orden', 'warning');
+                return;
+            }
+
+            var data = {
+                tipoOrden: document.getElementById('o-tipo').value,
+                numeroMesa: parseInt(document.getElementById('o-mesa').value) || 0,
+                items: items
+            };
+
+            fetch(API_URL + '/ordenes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(function(response) {
+                if (response.ok) {
+                    return response.json().then(function(orden) {
+                        mostrarAlerta('✅ Orden ' + orden.ID + ' creada! Total: $' + orden.Total.toFixed(2));
+                        document.getElementById('form-orden').reset();
+                        document.getElementById('items-orden').innerHTML = '';
+                        itemCount = 0;
+                        agregarItemOrden();
+                    });
+                } else {
+                    return response.json().then(function(err) {
+                        mostrarAlerta('Error: ' + err.error, 'danger');
+                    });
+                }
+            })
+            .catch(function(error) {
+                mostrarAlerta('Error: ' + error.message, 'danger');
+            });
+        });
+    </script>
+</body>
+</html>
