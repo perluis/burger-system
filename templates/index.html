@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,14 +8,37 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
     <style>
-        body { background-color: #f8f9fa; }
-        .navbar { background: linear-gradient(135deg, #ff6b35, #f7c59f); }
-        .card { transition: transform 0.2s; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .precio { font-size: 1.5rem; color: #28a745; font-weight: bold; }
-        .categoria-badge { position: absolute; top: 10px; right: 10px; }
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .navbar {
+            background: linear-gradient(135deg, #ff6b35, #f7c59f);
+        }
+
+        .card {
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .precio {
+            font-size: 1.5rem;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .categoria-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
     </style>
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
@@ -37,6 +61,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#" onclick="mostrarSeccion('nueva-orden')">
                             <i class="bi bi-cart"></i> Nueva Orden
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="mostrarSeccion('ver-ordenes')">
+                            <i class="bi bi-list-check"></i> Ver Órdenes
                         </a>
                     </li>
                 </ul>
@@ -86,7 +115,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Ingredientes (separados por coma)</label>
-                            <input type="text" class="form-control" id="h-ingredientes" placeholder="carne, queso, lechuga, tomate">
+                            <input type="text" class="form-control" id="h-ingredientes"
+                                placeholder="carne, queso, lechuga, tomate">
                         </div>
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save"></i> Guardar Hamburguesa
@@ -104,20 +134,37 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Tipo de Orden</label>
-                                <select class="form-select" id="o-tipo" required>
+                                <select class="form-select" id="o-tipo" required onchange="cambiarTipoOrden()">
                                     <option value="mesa">Mesa</option>
-                                    <option value="delivery">Delivery</option>
                                     <option value="para_llevar">Para Llevar</option>
+                                    <option value="delivery">Delivery</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3" id="campo-mesa">
                                 <label class="form-label">Número de Mesa</label>
-                                <input type="number" class="form-control" id="o-mesa" value="1">
+                                <select class="form-select" id="o-mesa">
+                                    <option value="1">Mesa 1</option>
+                                    <option value="2">Mesa 2</option>
+                                    <option value="3">Mesa 3</option>
+                                    <option value="4">Mesa 4</option>
+                                    <option value="5">Mesa 5</option>
+                                    <option value="6">Mesa 6</option>
+                                    <option value="7">Mesa 7</option>
+                                    <option value="8">Mesa 8</option>
+                                    <option value="9">Mesa 9</option>
+                                    <option value="10">Mesa 10</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3" id="campo-direccion" style="display: none;">
+                                <label class="form-label">Dirección de Entrega</label>
+                                <input type="text" class="form-control" id="o-direccion"
+                                    placeholder="Ej: Av. Principal 123">
                             </div>
                         </div>
                         <h5 class="mt-3">Items de la Orden</h5>
                         <div id="items-orden"></div>
-                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" onclick="agregarItemOrden()">
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2"
+                            onclick="agregarItemOrden()">
                             <i class="bi bi-plus"></i> Agregar Item
                         </button>
                         <hr>
@@ -128,6 +175,84 @@
                 </div>
             </div>
         </section>
+
+        <!-- Sección: Ver Órdenes -->
+        <section id="seccion-ver-ordenes" style="display: none;">
+            <h2><i class="bi bi-list-check"></i> Gestión de Órdenes</h2>
+
+            <!-- Buscar orden por ID -->
+            <div class="card mt-3 mb-4">
+                <div class="card-body">
+                    <h5>Buscar Orden</h5>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="buscar-orden-id" placeholder="Ej: ORD-001">
+                        <button class="btn btn-primary" onclick="buscarOrden()">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detalle de orden -->
+            <div id="detalle-orden" style="display: none;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-receipt"></i> Orden: <span id="orden-id"></span></h5>
+                        <span id="orden-estado-badge" class="badge"></span>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <strong>Tipo:</strong> <span id="orden-tipo"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Mesa:</strong> <span id="orden-mesa"></span>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Fecha:</strong> <span id="orden-fecha"></span>
+                            </div>
+                        </div>
+
+                        <h6>Items:</h6>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Cantidad</th>
+                                    <th>Precio Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th>Notas</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orden-items"></tbody>
+                        </table>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Cambiar Estado:</h6>
+                                <div class="input-group">
+                                    <select class="form-select" id="nuevo-estado">
+                                        <option value="PENDIENTE">PENDIENTE</option>
+                                        <option value="EN_COCINA">EN_COCINA</option>
+                                        <option value="LISTA">LISTA</option>
+                                        <option value="ENTREGADA">ENTREGADA</option>
+                                        <option value="CANCELADA">CANCELADA</option>
+                                    </select>
+                                    <button class="btn btn-warning" onclick="cambiarEstadoOrden()">
+                                        <i class="bi bi-arrow-repeat"></i> Actualizar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <p class="mb-1">Subtotal: $<span id="orden-subtotal"></span></p>
+                                <p class="mb-1">IVA (15%): $<span id="orden-iva"></span></p>
+                                <h4 class="text-success">Total: $<span id="orden-total"></span></h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -135,15 +260,22 @@
         const API_URL = 'http://localhost:8080/api';
         let hamburguesasDisponibles = [];
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             cargarHamburguesas();
         });
 
+        // Mostrar sección seleccionada y ocultar las demás
         function mostrarSeccion(seccion) {
             document.getElementById('seccion-hamburguesas').style.display = 'none';
             document.getElementById('seccion-nueva-hamburguesa').style.display = 'none';
             document.getElementById('seccion-nueva-orden').style.display = 'none';
+            document.getElementById('seccion-ver-ordenes').style.display = 'none';
             document.getElementById('seccion-' + seccion).style.display = 'block';
+
+            if (seccion === 'nueva-hamburguesa' && !editandoId) {
+                resetearFormularioHamburguesa();
+            }
+
             if (seccion === 'nueva-orden') {
                 cargarSelectHamburguesas();
                 if (document.getElementById('items-orden').children.length === 0) {
@@ -155,21 +287,25 @@
         function mostrarAlerta(mensaje, tipo) {
             tipo = tipo || 'success';
             var alertas = document.getElementById('alertas');
-            alertas.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' + mensaje + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
-            setTimeout(function() { alertas.innerHTML = ''; }, 5000);
+            alertas.innerHTML = '<div class="alert alert-' + tipo + ' alert-dismissible fade show" role="alert">' +
+                mensaje +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>';
+            setTimeout(function () { alertas.innerHTML = ''; }, 5000);
         }
+
+        // ==================== HAMBURGUESAS ====================
 
         function cargarHamburguesas() {
             fetch(API_URL + '/hamburguesas')
-                .then(function(response) {
+                .then(function (response) {
                     return response.json();
                 })
-                .then(function(hamburguesas) {
+                .then(function (hamburguesas) {
                     hamburguesasDisponibles = hamburguesas;
                     var lista = document.getElementById('lista-hamburguesas');
                     lista.innerHTML = '';
 
-                    if (hamburguesas.length === 0) {
+                    if (!hamburguesas || hamburguesas.length === 0) {
                         lista.innerHTML = '<div class="col-12"><p class="text-muted">No hay hamburguesas registradas.</p></div>';
                         return;
                     }
@@ -195,31 +331,171 @@
 
                     for (var i = 0; i < hamburguesas.length; i++) {
                         var h = hamburguesas[i];
-                        var color = categoriaColor[h.Categoria] || 'secondary';
-                        var imagen = imagenes[h.Nombre] || imagenDefault[h.Categoria] || '/static/img/clasica.png';
-                        var ingredientes = h.Ingredientes ? h.Ingredientes.join(', ') : 'N/A';
-                        var disponibleBadge = h.Disponible ? '<span class="badge bg-success">Disponible</span>' : '<span class="badge bg-danger">No disponible</span>';
+                        var id = h.id;
+                        var color = categoriaColor[h.categoria] || 'secondary';
+                        var imagen = imagenes[h.nombre] || imagenDefault[h.categoria] || '/static/img/clasica.png';
+                        var ingredientes = h.ingredientes ? h.ingredientes.join(', ') : 'N/A';
+                        var disponibleBadge = h.disponible
+                            ? '<span class="badge bg-success">Disponible</span>'
+                            : '<span class="badge bg-danger">No disponible</span>';
 
                         var card = '<div class="col-md-4 mb-4">' +
                             '<div class="card h-100 position-relative">' +
-                            '<span class="badge bg-' + color + ' categoria-badge">' + h.Categoria + '</span>' +
-                            '<img src="' + imagen + '" class="card-img-top" alt="' + h.Nombre + '" style="height: 200px; object-fit: cover;">' +
+                            '<span class="badge bg-' + color + ' categoria-badge">' + h.categoria + '</span>' +
+                            '<img src="' + imagen + '" class="card-img-top" alt="' + h.nombre + '" style="height: 200px; object-fit: cover;">' +
                             '<div class="card-body">' +
-                            '<h5 class="card-title">' + h.Nombre + '</h5>' +
-                            '<p class="card-text text-muted">' + (h.Descripcion || 'Sin descripción') + '</p>' +
-                            '<p class="precio">$' + h.Precio.toFixed(2) + '</p>' +
+                            '<h5 class="card-title">' + h.nombre + '</h5>' +
+                            '<p class="card-text text-muted">' + (h.descripcion || 'Sin descripción') + '</p>' +
+                            '<p class="precio">$' + h.precio.toFixed(2) + '</p>' +
                             '<p class="small"><strong>Ingredientes:</strong> ' + ingredientes + '</p>' +
                             '</div>' +
-                            '<div class="card-footer bg-white">' + disponibleBadge + '</div>' +
+                            '<div class="card-footer bg-white d-flex justify-content-between align-items-center">' +
+                            disponibleBadge +
+                            '<div>' +
+                            '<button class="btn btn-sm btn-outline-primary me-2" onclick="editarHamburguesa(\'' + id + '\')">' +
+                            '<i class="bi bi-pencil"></i>' +
+                            '</button>' +
+                            '<button class="btn btn-sm btn-outline-danger" onclick="eliminarHamburguesa(\'' + id + '\', \'' + h.nombre.replace(/'/g, "\\'") + '\')">' +
+                            '<i class="bi bi-trash"></i>' +
+                            '</button>' +
+                            '</div>' +
+                            '</div>' +
                             '</div>' +
                             '</div>';
 
                         lista.innerHTML += card;
                     }
                 })
-                .catch(function(error) {
+                .catch(function (error) {
                     mostrarAlerta('Error cargando hamburguesas: ' + error.message, 'danger');
                 });
+        }
+
+        function eliminarHamburguesa(id, nombre) {
+            if (!confirm('¿Estás seguro de eliminar "' + nombre + '"?')) {
+                return;
+            }
+
+            fetch(API_URL + '/hamburguesas/' + id, {
+                method: 'DELETE'
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        mostrarAlerta('Hamburguesa eliminada exitosamente!');
+                        cargarHamburguesas();
+                    } else {
+                        return response.json().then(function (err) {
+                            mostrarAlerta('Error: ' + err.error, 'danger');
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    mostrarAlerta('Error: ' + error.message, 'danger');
+                });
+        }
+
+        var editandoId = null;
+
+        function editarHamburguesa(id) {
+            var hamburguesa = null;
+            for (var i = 0; i < hamburguesasDisponibles.length; i++) {
+                if (hamburguesasDisponibles[i].id === id) {
+                    hamburguesa = hamburguesasDisponibles[i];
+                    break;
+                }
+            }
+
+            if (!hamburguesa) {
+                mostrarAlerta('Hamburguesa no encontrada', 'danger');
+                return;
+            }
+
+            editandoId = id;
+
+            document.getElementById('h-nombre').value = hamburguesa.nombre;
+            document.getElementById('h-descripcion').value = hamburguesa.descripcion || '';
+            document.getElementById('h-precio').value = hamburguesa.precio;
+            document.getElementById('h-categoria').value = hamburguesa.categoria;
+            document.getElementById('h-ingredientes').value = hamburguesa.ingredientes ? hamburguesa.ingredientes.join(', ') : '';
+
+            document.querySelector('#seccion-nueva-hamburguesa h2').innerHTML =
+                '<i class="bi bi-pencil"></i> Editar Hamburguesa';
+            document.querySelector('#form-hamburguesa button[type="submit"]').innerHTML =
+                '<i class="bi bi-save"></i> Actualizar Hamburguesa';
+
+            mostrarSeccion('nueva-hamburguesa');
+        }
+
+        function resetearFormularioHamburguesa() {
+            editandoId = null;
+            document.getElementById('form-hamburguesa').reset();
+            document.querySelector('#seccion-nueva-hamburguesa h2').innerHTML =
+                '<i class="bi bi-plus-circle"></i> Crear Nueva Hamburguesa';
+            document.querySelector('#form-hamburguesa button[type="submit"]').innerHTML =
+                '<i class="bi bi-save"></i> Guardar Hamburguesa';
+        }
+
+        document.getElementById('form-hamburguesa').addEventListener('submit', function (e) {
+            e.preventDefault();
+            var ingredientesRaw = document.getElementById('h-ingredientes').value;
+            var ingredientes = ingredientesRaw.split(',').map(function (i) { return i.trim(); }).filter(function (i) { return i; });
+
+            var data = {
+                nombre: document.getElementById('h-nombre').value,
+                descripcion: document.getElementById('h-descripcion').value,
+                precio: parseFloat(document.getElementById('h-precio').value),
+                categoria: document.getElementById('h-categoria').value,
+                ingredientes: ingredientes
+            };
+
+            var url = API_URL + '/hamburguesas';
+            var method = 'POST';
+
+            if (editandoId) {
+                url = API_URL + '/hamburguesas/' + editandoId;
+                method = 'PUT';
+            }
+
+            fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        var mensaje = editandoId ? 'Hamburguesa actualizada!' : 'Hamburguesa creada!';
+                        mostrarAlerta(mensaje);
+                        resetearFormularioHamburguesa();
+                        cargarHamburguesas();
+                        mostrarSeccion('hamburguesas');
+                    } else {
+                        return response.json().then(function (err) {
+                            mostrarAlerta('Error: ' + err.error, 'danger');
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    mostrarAlerta('Error: ' + error.message, 'danger');
+                });
+        });
+
+        // ==================== ÓRDENES ====================
+
+        function cambiarTipoOrden() {
+            var tipo = document.getElementById('o-tipo').value;
+            var campoMesa = document.getElementById('campo-mesa');
+            var campoDireccion = document.getElementById('campo-direccion');
+
+            if (tipo === 'mesa') {
+                campoMesa.style.display = 'block';
+                campoDireccion.style.display = 'none';
+            } else if (tipo === 'delivery') {
+                campoMesa.style.display = 'none';
+                campoDireccion.style.display = 'block';
+            } else {
+                campoMesa.style.display = 'none';
+                campoDireccion.style.display = 'none';
+            }
         }
 
         function cargarSelectHamburguesas() {
@@ -230,8 +506,8 @@
                 select.innerHTML = '<option value="">Seleccionar hamburguesa...</option>';
                 for (var i = 0; i < hamburguesasDisponibles.length; i++) {
                     var h = hamburguesasDisponibles[i];
-                    var id = 'BURG-' + String(i + 1).padStart(3, '0');
-                    select.innerHTML += '<option value="' + id + '">' + h.Nombre + ' - $' + h.Precio.toFixed(2) + '</option>';
+                    var id = h.id;
+                    select.innerHTML += '<option value="' + id + '">' + h.nombre + ' - $' + h.precio.toFixed(2) + '</option>';
                 }
                 if (valorActual) select.value = valorActual;
             }
@@ -243,50 +519,25 @@
             var container = document.getElementById('items-orden');
             var div = document.createElement('div');
             div.className = 'row mb-2 item-orden';
-            div.innerHTML = '<div class="col-md-5"><select class="form-select select-hamburguesa" name="hamburguesa-' + itemCount + '" required><option value="">Seleccionar hamburguesa...</option></select></div>' +
-                '<div class="col-md-2"><input type="number" class="form-control" name="cantidad-' + itemCount + '" value="1" min="1" placeholder="Cant."></div>' +
-                '<div class="col-md-4"><input type="text" class="form-control" name="notas-' + itemCount + '" placeholder="Notas (opcional)"></div>' +
-                '<div class="col-md-1"><button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest(\'.item-orden\').remove()"><i class="bi bi-trash"></i></button></div>';
+            div.innerHTML =
+                '<div class="col-md-5">' +
+                '<select class="form-select select-hamburguesa" name="hamburguesa-' + itemCount + '" required>' +
+                '<option value="">Seleccionar hamburguesa...</option>' +
+                '</select></div>' +
+                '<div class="col-md-2">' +
+                '<input type="number" class="form-control" name="cantidad-' + itemCount + '" value="1" min="1" placeholder="Cant.">' +
+                '</div>' +
+                '<div class="col-md-4">' +
+                '<input type="text" class="form-control" name="notas-' + itemCount + '" placeholder="Notas (opcional)">' +
+                '</div>' +
+                '<div class="col-md-1">' +
+                '<button type="button" class="btn btn-outline-danger btn-sm" onclick="this.closest(\'.item-orden\').remove()">' +
+                '<i class="bi bi-trash"></i></button></div>';
             container.appendChild(div);
             cargarSelectHamburguesas();
         }
 
-        document.getElementById('form-hamburguesa').addEventListener('submit', function(e) {
-            e.preventDefault();
-            var ingredientesRaw = document.getElementById('h-ingredientes').value;
-            var ingredientes = ingredientesRaw.split(',').map(function(i) { return i.trim(); }).filter(function(i) { return i; });
-
-            var data = {
-                nombre: document.getElementById('h-nombre').value,
-                descripcion: document.getElementById('h-descripcion').value,
-                precio: parseFloat(document.getElementById('h-precio').value),
-                categoria: document.getElementById('h-categoria').value,
-                ingredientes: ingredientes
-            };
-
-            fetch(API_URL + '/hamburguesas', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(function(response) {
-                if (response.ok) {
-                    mostrarAlerta('✅ Hamburguesa creada exitosamente!');
-                    document.getElementById('form-hamburguesa').reset();
-                    cargarHamburguesas();
-                    mostrarSeccion('hamburguesas');
-                } else {
-                    return response.json().then(function(err) {
-                        mostrarAlerta('Error: ' + err.error, 'danger');
-                    });
-                }
-            })
-            .catch(function(error) {
-                mostrarAlerta('Error: ' + error.message, 'danger');
-            });
-        });
-
-        document.getElementById('form-orden').addEventListener('submit', function(e) {
+        document.getElementById('form-orden').addEventListener('submit', function (e) {
             e.preventDefault();
             var items = [];
             var itemElements = document.querySelectorAll('.item-orden');
@@ -320,25 +571,132 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             })
-            .then(function(response) {
-                if (response.ok) {
-                    return response.json().then(function(orden) {
-                        mostrarAlerta('✅ Orden ' + orden.ID + ' creada! Total: $' + orden.Total.toFixed(2));
-                        document.getElementById('form-orden').reset();
-                        document.getElementById('items-orden').innerHTML = '';
-                        itemCount = 0;
-                        agregarItemOrden();
-                    });
-                } else {
-                    return response.json().then(function(err) {
-                        mostrarAlerta('Error: ' + err.error, 'danger');
-                    });
-                }
-            })
-            .catch(function(error) {
-                mostrarAlerta('Error: ' + error.message, 'danger');
-            });
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json().then(function (orden) {
+                            mostrarAlerta('Orden ' + orden.ID + ' creada! Total: $' + orden.Total.toFixed(2));
+                            document.getElementById('form-orden').reset();
+                            document.getElementById('items-orden').innerHTML = '';
+                            itemCount = 0;
+                            agregarItemOrden();
+                            cambiarTipoOrden();
+                        });
+                    } else {
+                        return response.json().then(function (err) {
+                            mostrarAlerta('Error: ' + err.error, 'danger');
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    mostrarAlerta('Error: ' + error.message, 'danger');
+                });
         });
+
+        // ==================== VER ÓRDENES ====================
+
+        var ordenActual = null;
+
+        function buscarOrden() {
+            var id = document.getElementById('buscar-orden-id').value.trim();
+
+            if (!id) {
+                mostrarAlerta('Ingrese un ID de orden', 'warning');
+                return;
+            }
+
+            fetch(API_URL + '/ordenes/' + id)
+                .then(function (response) {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Orden no encontrada');
+                    }
+                })
+                .then(function (orden) {
+                    ordenActual = orden;
+                    mostrarDetalleOrden(orden);
+                })
+                .catch(function (error) {
+                    document.getElementById('detalle-orden').style.display = 'none';
+                    mostrarAlerta('Error: ' + error.message, 'danger');
+                });
+        }
+
+        function mostrarDetalleOrden(orden) {
+            document.getElementById('orden-id').textContent = orden.ID;
+            document.getElementById('orden-tipo').textContent = orden.TipoOrden;
+            document.getElementById('orden-mesa').textContent = orden.NumeroMesa || 'N/A';
+            document.getElementById('orden-fecha').textContent = new Date(orden.FechaHora).toLocaleString();
+
+            var estadoBadge = document.getElementById('orden-estado-badge');
+            var estadoColores = {
+                'PENDIENTE': 'bg-secondary',
+                'EN_COCINA': 'bg-warning',
+                'LISTA': 'bg-info',
+                'ENTREGADA': 'bg-success',
+                'CANCELADA': 'bg-danger'
+            };
+            estadoBadge.className = 'badge ' + (estadoColores[orden.Estado] || 'bg-secondary');
+            estadoBadge.textContent = orden.Estado;
+
+            document.getElementById('nuevo-estado').value = orden.Estado;
+
+            var itemsHtml = '';
+            if (orden.Items && orden.Items.length > 0) {
+                for (var i = 0; i < orden.Items.length; i++) {
+                    var item = orden.Items[i];
+                    var subtotalItem = item.Cantidad * item.PrecioUnit;
+                    itemsHtml += '<tr>' +
+                        '<td>' + item.Nombre + '</td>' +
+                        '<td>' + item.Cantidad + '</td>' +
+                        '<td>$' + item.PrecioUnit.toFixed(2) + '</td>' +
+                        '<td>$' + subtotalItem.toFixed(2) + '</td>' +
+                        '<td>' + (item.Notas || '-') + '</td>' +
+                        '</tr>';
+                }
+            }
+            document.getElementById('orden-items').innerHTML = itemsHtml;
+
+            var subtotal = orden.Subtotal || 0;
+            var total = orden.Total || 0;
+            var iva = total - subtotal;
+
+            document.getElementById('orden-subtotal').textContent = subtotal.toFixed(2);
+            document.getElementById('orden-iva').textContent = iva.toFixed(2);
+            document.getElementById('orden-total').textContent = total.toFixed(2);
+
+            document.getElementById('detalle-orden').style.display = 'block';
+        }
+
+        function cambiarEstadoOrden() {
+            if (!ordenActual) {
+                mostrarAlerta('No hay orden seleccionada', 'warning');
+                return;
+            }
+
+            var nuevoEstado = document.getElementById('nuevo-estado').value;
+
+            fetch(API_URL + '/ordenes/' + ordenActual.ID + '/estado', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: nuevoEstado })
+            })
+                .then(function (response) {
+                    if (response.ok) {
+                        mostrarAlerta('Estado actualizado a: ' + nuevoEstado);
+                        ordenActual.Estado = nuevoEstado;
+                        mostrarDetalleOrden(ordenActual);
+                    } else {
+                        return response.json().then(function (err) {
+                            mostrarAlerta('Error: ' + err.error, 'danger');
+                        });
+                    }
+                })
+                .catch(function (error) {
+                    mostrarAlerta('Error: ' + error.message, 'danger');
+                });
+        }
     </script>
 </body>
+
 </html>

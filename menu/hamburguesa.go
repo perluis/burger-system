@@ -1,6 +1,7 @@
 package menu
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -127,4 +128,32 @@ func (h *Hamburguesa) Validar() error {
 		return errors.New("el precio debe ser mayor a 0")
 	}
 	return nil
+}
+
+// MarshalJSON personaliza la serialización JSON para incluir el ID privado.
+// Esto es necesario porque el campo 'id' es privado (minúscula) y Go
+// no lo incluye automáticamente en la serialización JSON.
+// Sin este método, el frontend no recibiría los IDs de las hamburguesas.
+func (h *Hamburguesa) MarshalJSON() ([]byte, error) {
+	// Estructura auxiliar que define cómo se verá el JSON de salida
+	type HamburguesaJSON struct {
+		ID           string   `json:"id"`
+		Nombre       string   `json:"nombre"`
+		Descripcion  string   `json:"descripcion"`
+		Precio       float64  `json:"precio"`
+		Categoria    string   `json:"categoria"`
+		Ingredientes []string `json:"ingredientes"`
+		Disponible   bool     `json:"disponible"`
+	}
+
+	// Convertir la hamburguesa a la estructura JSON y serializar
+	return json.Marshal(HamburguesaJSON{
+		ID:           h.id,
+		Nombre:       h.Nombre,
+		Descripcion:  h.Descripcion,
+		Precio:       h.Precio,
+		Categoria:    h.Categoria,
+		Ingredientes: h.Ingredientes,
+		Disponible:   h.Disponible,
+	})
 }
