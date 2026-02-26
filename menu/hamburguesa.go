@@ -74,6 +74,11 @@ func (h *Hamburguesa) GetID() string {
 	return h.id
 }
 
+// SetID establece el ID de la hamburguesa (usado para cargar desde BD)
+func (h *Hamburguesa) SetID(id string) {
+	h.id = id
+}
+
 // GetFechaCreado retorna la fecha de creación (solo lectura)
 func (h *Hamburguesa) GetFechaCreado() time.Time {
 	return h.fechaCreado

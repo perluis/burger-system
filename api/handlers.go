@@ -10,39 +10,50 @@ import (
 	"github.com/perluis/burger-system/storage"
 )
 
-// Server contiene el store y los handlers
+// Server contiene la base de datos y los handlers
 type Server struct {
-	store *storage.Store
+	db *storage.Database
 }
 
-// NewServer crea un nuevo servidor
-func NewServer(store *storage.Store) *Server {
+// NewServer crea un nuevo servidor con conexión a BD
+func NewServer(db *storage.Database) *Server {
 	return &Server{
-		store: store,
+		db: db,
 	}
 }
 
+// ==================== HANDLERS HAMBURGUESAS ====================
+
 // GetHamburguesas maneja GET /api/hamburguesas
 func (s *Server) GetHamburguesas(w http.ResponseWriter, r *http.Request) {
-	// Obtener todas las hamburguesas del store
-	hamburguesas := s.store.GetHamburguesas()
+	hamburguesas, err := s.db.GetHamburguesas()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error obteniendo hamburguesas: " + err.Error(),
+		})
+		return
+	}
 
-	// Convertir a JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(hamburguesas)
 }
 
 // GetHamburguesaByID maneja GET /api/hamburguesas/{id}
 func (s *Server) GetHamburguesaByID(w http.ResponseWriter, r *http.Request) {
-	// Obtener el ID de la URL
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Buscar la hamburguesa
-	hamburguesa := s.store.GetHamburguesaByID(id)
+	hamburguesa, err := s.db.GetHamburguesaByID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error en base de datos: " + err.Error(),
+		})
+		return
+	}
 
 	if hamburguesa == nil {
-		// No existe
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
 			"error": "Hamburguesa no encontrada",
@@ -50,14 +61,12 @@ func (s *Server) GetHamburguesaByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Devolver la hamburguesa en JSON
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(hamburguesa)
 }
 
 // CreateHamburguesa maneja POST /api/hamburguesas
 func (s *Server) CreateHamburguesa(w http.ResponseWriter, r *http.Request) {
-	// Estructura para recibir los datos del JSON
 	var input struct {
 		Nombre       string   `json:"nombre"`
 		Descripcion  string   `json:"descripcion"`
@@ -66,7 +75,6 @@ func (s *Server) CreateHamburguesa(w http.ResponseWriter, r *http.Request) {
 		Ingredientes []string `json:"ingredientes"`
 	}
 
-	// Decodificar el JSON del body
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -76,7 +84,7 @@ func (s *Server) CreateHamburguesa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Crear la hamburguesa usando la función del paquete menu
+	// Crear hamburguesa con validaciones
 	hamburguesa, err := menu.NuevaHamburguesa(
 		input.Nombre,
 		input.Descripcion,
@@ -84,7 +92,6 @@ func (s *Server) CreateHamburguesa(w http.ResponseWriter, r *http.Request) {
 		input.Categoria,
 		input.Ingredientes,
 	)
-
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{
@@ -93,29 +100,36 @@ func (s *Server) CreateHamburguesa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Agregar al store
-	s.store.AddHamburguesa(hamburguesa)
+	// Obtener siguiente ID de la BD
+	nextID, _ := s.db.GetNextHamburguesaID()
+	hamburguesa.SetID(nextID)
 
-	// Responder con la hamburguesa creada
-	w.WriteHeader(http.StatusCreated) // 201
+	// Guardar en BD
+	err = s.db.CreateHamburguesa(hamburguesa)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error guardando en base de datos: " + err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(hamburguesa)
 }
 
 // UpdateHamburguesa maneja PUT /api/hamburguesas/{id}
 func (s *Server) UpdateHamburguesa(w http.ResponseWriter, r *http.Request) {
-	// Obtener el ID de la URL
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Estructura para recibir los datos
 	var input struct {
 		Nombre      string  `json:"nombre"`
 		Descripcion string  `json:"descripcion"`
 		Precio      float64 `json:"precio"`
 	}
 
-	// Decodificar JSON
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -125,18 +139,15 @@ func (s *Server) UpdateHamburguesa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Actualizar en el store
-	success := s.store.UpdateHamburguesa(id, input.Nombre, input.Descripcion, input.Precio)
-
-	if !success {
+	err = s.db.UpdateHamburguesa(id, input.Nombre, input.Descripcion, input.Precio)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Hamburguesa no encontrada",
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// Responder con éxito
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Hamburguesa actualizada exitosamente",
@@ -145,31 +156,28 @@ func (s *Server) UpdateHamburguesa(w http.ResponseWriter, r *http.Request) {
 
 // DeleteHamburguesa maneja DELETE /api/hamburguesas/{id}
 func (s *Server) DeleteHamburguesa(w http.ResponseWriter, r *http.Request) {
-	// Obtener el ID de la URL
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Eliminar del store
-	success := s.store.DeleteHamburguesa(id)
-
-	if !success {
+	err := s.db.DeleteHamburguesa(id)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Hamburguesa no encontrada",
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// Responder con éxito
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Hamburguesa eliminada exitosamente",
 	})
 }
 
+// ==================== HANDLERS ÓRDENES ====================
+
 // CreateOrden maneja POST /api/ordenes
 func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
-	// Estructura para recibir los datos
 	var input struct {
 		TipoOrden  string `json:"tipoOrden"`
 		NumeroMesa int    `json:"numeroMesa"`
@@ -180,7 +188,6 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 		} `json:"items"`
 	}
 
-	// Decodificar JSON
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -190,7 +197,7 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Crear la orden
+	// Crear orden
 	orden, err := orders.NuevaOrden(input.TipoOrden, input.NumeroMesa)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -200,11 +207,14 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Agregar items a la orden
+	// Obtener siguiente ID
+	nextID, _ := s.db.GetNextOrdenID()
+	orden.ID = nextID
+
+	// Agregar items
 	for _, item := range input.Items {
-		// Buscar la hamburguesa para obtener nombre y precio
-		hamburguesa := s.store.GetHamburguesaByID(item.HamburguesaID)
-		if hamburguesa == nil {
+		hamburguesa, err := s.db.GetHamburguesaByID(item.HamburguesaID)
+		if err != nil || hamburguesa == nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{
 				"error": "Hamburguesa no encontrada: " + item.HamburguesaID,
@@ -219,7 +229,6 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 			hamburguesa.Precio,
 			item.Notas,
 		)
-
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			json.NewEncoder(w).Encode(map[string]string{
@@ -229,10 +238,16 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Guardar en el store
-	s.store.AddOrden(orden)
+	// Guardar en BD
+	err = s.db.CreateOrden(orden)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error guardando orden: " + err.Error(),
+		})
+		return
+	}
 
-	// Responder
 	w.WriteHeader(http.StatusCreated)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(orden)
@@ -240,12 +255,17 @@ func (s *Server) CreateOrden(w http.ResponseWriter, r *http.Request) {
 
 // GetOrdenByID maneja GET /api/ordenes/{id}
 func (s *Server) GetOrdenByID(w http.ResponseWriter, r *http.Request) {
-	// Obtener ID de la URL
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Buscar la orden
-	orden := s.store.GetOrdenByID(id)
+	orden, err := s.db.GetOrdenByID(id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{
+			"error": "Error en base de datos: " + err.Error(),
+		})
+		return
+	}
 
 	if orden == nil {
 		w.WriteHeader(http.StatusNotFound)
@@ -255,23 +275,19 @@ func (s *Server) GetOrdenByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Responder
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(orden)
 }
 
 // UpdateOrdenEstado maneja PUT /api/ordenes/{id}/estado
 func (s *Server) UpdateOrdenEstado(w http.ResponseWriter, r *http.Request) {
-	// Obtener ID de la URL
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	// Estructura para recibir el nuevo estado
 	var input struct {
 		Estado string `json:"estado"`
 	}
 
-	// Decodificar JSON
 	err := json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -281,18 +297,15 @@ func (s *Server) UpdateOrdenEstado(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Actualizar estado
-	success := s.store.UpdateOrdenEstado(id, input.Estado)
-
-	if !success {
+	err = s.db.UpdateOrdenEstado(id, input.Estado)
+	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode(map[string]string{
-			"error": "Orden no encontrada o estado inválido",
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// Responder
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{
 		"message": "Estado de orden actualizado exitosamente",

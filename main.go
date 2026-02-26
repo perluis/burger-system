@@ -11,28 +11,35 @@ import (
 )
 
 func main() {
-	// Crear el store con datos iniciales
-	store := storage.NewStore()
+	// Conectar a MySQL
+	db, err := storage.NewDatabase()
+	if err != nil {
+		log.Fatal("❌ Error conectando a MySQL: ", err)
+	}
+	defer db.Close()
 
-	// Crear el servidor con el store
-	server := api.NewServer(store)
+	// Crear servidor con la base de datos
+	server := api.NewServer(db)
 
-	// Crear el router
+	// Crear router
 	router := mux.NewRouter()
 
-	// Definir rutas
+	// Rutas de hamburguesas
 	router.HandleFunc("/api/hamburguesas", server.GetHamburguesas).Methods("GET")
 	router.HandleFunc("/api/hamburguesas/{id}", server.GetHamburguesaByID).Methods("GET")
 	router.HandleFunc("/api/hamburguesas", server.CreateHamburguesa).Methods("POST")
 	router.HandleFunc("/api/hamburguesas/{id}", server.UpdateHamburguesa).Methods("PUT")
 	router.HandleFunc("/api/hamburguesas/{id}", server.DeleteHamburguesa).Methods("DELETE")
+
+	// Rutas de órdenes
 	router.HandleFunc("/api/ordenes", server.CreateOrden).Methods("POST")
 	router.HandleFunc("/api/ordenes/{id}", server.GetOrdenByID).Methods("GET")
 	router.HandleFunc("/api/ordenes/{id}/estado", server.UpdateOrdenEstado).Methods("PUT")
 
-	// Ruta raíz (página de bienvenida)
+	// Ruta raíz
 	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "🍔 API Restaurante de Hamburguesas\n\n")
+		fmt.Fprintf(w, "✅ Conectado a MySQL\n\n")
 		fmt.Fprintf(w, "=== ENDPOINTS HAMBURGUESAS ===\n")
 		fmt.Fprintf(w, "GET    /api/hamburguesas        - Listar todas\n")
 		fmt.Fprintf(w, "GET    /api/hamburguesas/{id}   - Obtener por ID\n")
