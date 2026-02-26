@@ -1,30 +1,37 @@
 # 🍔 Sistema de Gestión - Restaurante de Hamburguesas
 
-Sistema de gestión para restaurante desarrollado en Go con API REST y serialización JSON.
+Sistema completo de gestión para restaurante desarrollado en Go con API REST, MySQL y Frontend web.
 
+**Autor:** Luis Agapito Pérez  
+**Universidad:** UIDE 2026  
 **Curso:** Programación Orientada a Objetos  
-**Proyecto:** El impacto de las nuevas tecnologías en la sociedad: visualización del futuro.
+**Proyecto:** Autónomo 3 - Servicios Web
 
 ---
 
 ## 📋 Descripción
 
-API REST para gestión completa de restaurante de hamburguesas que permite:
-- Administrar menú de hamburguesas (CRUD completo)
-- Gestionar órdenes de clientes
-- Cálculo automático de totales con IVA
-- Control de estados de órdenes
-- Serialización completa en JSON
+Sistema integral para la gestión de un restaurante de hamburguesas que incluye:
+
+- **API REST** con 8 endpoints funcionales
+- **Base de datos MySQL** para persistencia de datos
+- **Frontend web** con Bootstrap para interfaz visual
+- **Serialización JSON** para comunicación cliente-servidor
+- **Cálculo automático** de totales con IVA 12%
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-- **Lenguaje:** Go 1.21+
-- **Framework Web:** Gorilla Mux
-- **Formato de Datos:** JSON
-- **Arquitectura:** REST API
-- **Almacenamiento:** En memoria (RAM)
+| Tecnología | Uso |
+|------------|-----|
+| **Go 1.24** | Backend y API REST |
+| **Gorilla Mux** | Router HTTP |
+| **MySQL/MariaDB** | Base de datos |
+| **HTML5** | Estructura web |
+| **Bootstrap 5** | Estilos y diseño responsivo |
+| **JavaScript** | Interactividad frontend |
+| **XAMPP** | Servidor MySQL local |
 
 ---
 
@@ -33,17 +40,23 @@ API REST para gestión completa de restaurante de hamburguesas que permite:
 burger-system/
 ├── main.go                 # Servidor HTTP principal
 ├── api/
-│   └── handlers.go         # Controladores HTTP
+│   └── handlers.go         # Controladores de la API
 ├── storage/
-│   └── memory.go           # Almacenamiento en memoria
+│   ├── memory.go           # Storage en memoria (legacy)
+│   └── database.go         # Conexión y operaciones MySQL
 ├── menu/
-│   └── hamburguesa.go      # Modelo y lógica de hamburguesas
+│   └── hamburguesa.go      # Modelo de hamburguesas
 ├── orders/
-│   └── orden.go            # Modelo y lógica de órdenes
+│   └── orden.go            # Modelo de órdenes
+├── templates/
+│   └── index.html          # Página web principal
+├── static/
+│   └── img/                # Imágenes de hamburguesas
 ├── utils/
 │   ├── interfaces.go       # Interfaces del sistema
 │   └── helpers.go          # Funciones auxiliares
-└── README.md
+├── go.mod                  # Dependencias Go
+└── README.md               # Este archivo
 ```
 
 ---
@@ -51,29 +64,81 @@ burger-system/
 ## 🚀 Instalación y Ejecución
 
 ### Prerrequisitos
-- Go 1.21 o superior instalado
+
+- Go 1.21 o superior
+- XAMPP (MySQL/MariaDB)
 - Git
 
-### Pasos
-
-1. **Clonar el repositorio:**
+### Paso 1: Clonar repositorio
 ```bash
 git clone https://github.com/perluis/burger-system.git
 cd burger-system
 ```
 
-2. **Instalar dependencias:**
+### Paso 2: Instalar dependencias
 ```bash
 go mod download
 ```
 
-3. **Ejecutar el servidor:**
+### Paso 3: Configurar Base de Datos
+
+1. Iniciar XAMPP (Apache + MySQL)
+2. Abrir phpMyAdmin: http://localhost/phpmyadmin
+3. Crear base de datos: `burger_system`
+4. Ejecutar el siguiente SQL:
+```sql
+-- Tabla de hamburguesas
+CREATE TABLE hamburguesas (
+    id VARCHAR(20) PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    precio DECIMAL(10,2) NOT NULL,
+    categoria VARCHAR(50) NOT NULL,
+    ingredientes TEXT,
+    disponible BOOLEAN DEFAULT TRUE,
+    fecha_creado DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de órdenes
+CREATE TABLE ordenes (
+    id VARCHAR(20) PRIMARY KEY,
+    numero_mesa INT,
+    tipo_orden VARCHAR(50) NOT NULL,
+    estado VARCHAR(50) DEFAULT 'PENDIENTE',
+    subtotal DECIMAL(10,2),
+    total DECIMAL(10,2),
+    fecha_hora DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabla de items de orden
+CREATE TABLE items_orden (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    orden_id VARCHAR(20) NOT NULL,
+    hamburguesa_id VARCHAR(20) NOT NULL,
+    nombre VARCHAR(100),
+    cantidad INT NOT NULL,
+    precio_unit DECIMAL(10,2),
+    notas TEXT,
+    FOREIGN KEY (orden_id) REFERENCES ordenes(id),
+    FOREIGN KEY (hamburguesa_id) REFERENCES hamburguesas(id)
+);
+
+-- Datos iniciales
+INSERT INTO hamburguesas (id, nombre, descripcion, precio, categoria, ingredientes, disponible) VALUES
+('BURG-001', 'Hamburguesa Clásica', 'Deliciosa hamburguesa tradicional', 8.99, 'Clasica', 'carne,queso,lechuga,tomate,pan', TRUE),
+('BURG-002', 'BBQ Premium', 'Con tocino y salsa BBQ casera', 12.99, 'Premium', 'carne,queso cheddar,tocino,bbq,cebolla,pan', TRUE),
+('BURG-003', 'Veggie Deluxe', 'Hamburguesa vegetariana gourmet', 10.99, 'Vegetariana', 'portobello,queso,lechuga,tomate,aguacate,pan integral', TRUE);
+```
+
+### Paso 4: Ejecutar el servidor
 ```bash
 go run main.go
 ```
 
-4. **Verificar:**
-Abrir navegador en: http://localhost:8080
+### Paso 5: Abrir en navegador
+
+- **Web:** http://localhost:8080
+- **API:** http://localhost:8080/api/hamburguesas
 
 ---
 
@@ -83,43 +148,43 @@ Abrir navegador en: http://localhost:8080
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| GET | `/api/hamburguesas` | Listar todas las hamburguesas |
-| GET | `/api/hamburguesas/{id}` | Obtener hamburguesa por ID |
-| POST | `/api/hamburguesas` | Crear nueva hamburguesa |
-| PUT | `/api/hamburguesas/{id}` | Actualizar hamburguesa |
-| DELETE | `/api/hamburguesas/{id}` | Eliminar hamburguesa |
+| `GET` | `/api/hamburguesas` | Listar todas las hamburguesas |
+| `GET` | `/api/hamburguesas/{id}` | Obtener hamburguesa por ID |
+| `POST` | `/api/hamburguesas` | Crear nueva hamburguesa |
+| `PUT` | `/api/hamburguesas/{id}` | Actualizar hamburguesa |
+| `DELETE` | `/api/hamburguesas/{id}` | Eliminar hamburguesa |
 
 ### Órdenes
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/ordenes` | Crear nueva orden |
-| GET | `/api/ordenes/{id}` | Obtener orden por ID |
-| PUT | `/api/ordenes/{id}/estado` | Actualizar estado de orden |
+| `POST` | `/api/ordenes` | Crear nueva orden |
+| `GET` | `/api/ordenes/{id}` | Obtener orden por ID |
+| `PUT` | `/api/ordenes/{id}/estado` | Actualizar estado de orden |
 
 ---
 
-## 📖 Ejemplos de Uso
+## 📖 Ejemplos de Uso (CURL)
 
-### Listar todas las hamburguesas
+### Listar hamburguesas
 ```bash
 curl http://localhost:8080/api/hamburguesas
 ```
 
-### Crear una hamburguesa
+### Crear hamburguesa
 ```bash
 curl -X POST http://localhost:8080/api/hamburguesas \
   -H "Content-Type: application/json" \
   -d '{
     "nombre": "Hamburguesa Especial",
-    "descripcion": "Con ingredientes premium",
-    "precio": 11.99,
+    "descripcion": "Con ingredientes secretos",
+    "precio": 13.99,
     "categoria": "Premium",
-    "ingredientes": ["carne", "queso", "bacon", "aguacate"]
+    "ingredientes": ["carne", "queso", "bacon", "huevo"]
   }'
 ```
 
-### Crear una orden
+### Crear orden
 ```bash
 curl -X POST http://localhost:8080/api/ordenes \
   -H "Content-Type: application/json" \
@@ -127,11 +192,8 @@ curl -X POST http://localhost:8080/api/ordenes \
     "tipoOrden": "mesa",
     "numeroMesa": 5,
     "items": [
-      {
-        "hamburguesaID": "BURG-001",
-        "cantidad": 2,
-        "notas": "sin cebolla"
-      }
+      {"hamburguesaID": "BURG-001", "cantidad": 2, "notas": "sin cebolla"},
+      {"hamburguesaID": "BURG-002", "cantidad": 1, "notas": ""}
     ]
   }'
 ```
@@ -145,72 +207,92 @@ curl -X PUT http://localhost:8080/api/ordenes/ORD-001/estado \
 
 ---
 
-## 🏗️ Arquitectura
+## 🏗️ Arquitectura del Sistema
 
 ### Principios Aplicados
-- **Encapsulación:** Campos privados con getters
+
+- **Encapsulación:** Campos privados con getters/setters
 - **Interfaces:** Polimorfismo para operaciones comunes
 - **Manejo de Errores:** Validaciones en todas las operaciones
 - **Separación de Responsabilidades:** Paquetes independientes
+- **MVC:** Modelo-Vista-Controlador adaptado
 
-### Flujo de una Petición
+### Flujo de Datos
 ```
-Cliente → HTTP Request → Router (Mux) → Handler → Storage → Response (JSON)
+┌──────────┐     ┌──────────┐     ┌──────────┐     ┌──────────┐
+│  Cliente │ ──► │  Router  │ ──► │ Handler  │ ──► │  MySQL   │
+│ (Browser)│ ◄── │  (Mux)   │ ◄── │  (API)   │ ◄── │   (BD)   │
+└──────────┘     └──────────┘     └──────────┘     └──────────┘
+     │                                                   │
+     │              JSON Request/Response                │
+     └───────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔧 Funcionalidades Implementadas
+## 🔧 Funcionalidades
 
 ### Módulo de Hamburguesas
-- ✅ CRUD completo
-- ✅ Validación de datos (precio, categoría)
+- ✅ CRUD completo (Crear, Leer, Actualizar, Eliminar)
+- ✅ Validación de datos (precio positivo, categoría válida)
 - ✅ Generación automática de IDs
 - ✅ Control de disponibilidad
+- ✅ Persistencia en MySQL
 
 ### Módulo de Órdenes
 - ✅ Creación de órdenes multi-item
-- ✅ Cálculo automático de totales
+- ✅ Cálculo automático de subtotales
 - ✅ Aplicación de IVA (12% Ecuador)
 - ✅ Gestión de estados (PENDIENTE → EN_COCINA → LISTA → ENTREGADA)
 - ✅ Notas personalizadas por item
 
----
-
-## 🎯 Características Técnicas
-
-- **Serialización JSON:** Todas las respuestas en formato JSON
-- **Validaciones:** Entrada de datos validada
-- **Concurrencia:** Mutex para acceso seguro al storage
-- **Estados:** Máquina de estados para órdenes
-- **Cálculos:** Subtotales e IVA automáticos
+### Frontend Web
+- ✅ Diseño responsivo con Bootstrap
+- ✅ Visualización de menú con imágenes
+- ✅ Formulario para crear hamburguesas
+- ✅ Formulario para crear órdenes
+- ✅ Actualización dinámica sin recargar página
 
 ---
 
-## 📝 Notas Importantes
+## 🎯 Estados de Orden
 
-- El sistema usa almacenamiento en memoria (los datos se pierden al reiniciar)
-- El puerto por defecto es 8080
-- Todas las respuestas son en formato JSON
-- El IVA aplicado es del 12% (Ecuador)
+| Estado | Descripción |
+|--------|-------------|
+| `PENDIENTE` | Orden recién creada |
+| `EN_COCINA` | En preparación |
+| `LISTA` | Lista para entregar |
+| `ENTREGADA` | Entregada al cliente |
+| `CANCELADA` | Orden cancelada |
 
 ---
 
-## 🔮 Evolución Futura
+## 🔮 Proyección Futura
 
-- Persistencia en base de datos (PostgreSQL/MySQL)
-- Autenticación y autorización
-- Interfaz web con frontend
-- Sistema de reportes avanzados
+- Autenticación de usuarios (login/registro)
+- Panel de administración
+- Reportes de ventas
+- Sistema de inventario
 - Integración con sistemas de pago
+- Aplicación móvil con Flutter
 - Notificaciones en tiempo real
+
+---
+
+## 📝 Notas Técnicas
+
+- El servidor corre en el puerto 8080
+- La conexión MySQL usa: `root@localhost:3306/burger_system`
+- El IVA aplicado es del 12% (Ecuador)
+- Las imágenes se sirven desde `/static/img/`
 
 ---
 
 ## 👨‍💻 Autor
 
-**Luis Agapito**  
+**Luis Agapito Pérez**  
 Universidad Internacional del Ecuador (UIDE)  
+Programación Orientada a Objetos - 2026
 
 ---
 
