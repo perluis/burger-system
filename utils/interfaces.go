@@ -1,23 +1,26 @@
+// Package utils define interfaces que permiten polimorfismo en el sistema.
+// Tanto Hamburguesa como Orden implementan estas interfaces,
+// lo que permite tratarlas de forma genérica.
 package utils
 
 import "time"
 
-// Identificable representa cualquier entidad que tiene un ID único
+// Identificable: cualquier entidad con un ID único
 type Identificable interface {
 	GetID() string
 }
 
-// Actualizable representa entidades que pueden ser actualizadas
+// Actualizable: entidades que registran su fecha de creación
 type Actualizable interface {
 	GetFechaCreado() time.Time
 }
 
-// Informable representa entidades que pueden mostrar su información
+// Informable: entidades que pueden mostrar su información como texto
 type Informable interface {
 	ObtenerInfo() string
 }
 
-// Validable representa entidades que pueden ser validadas
+// Validable: entidades que pueden validar sus propios datos
 type Validable interface {
 	Validar() error
 }

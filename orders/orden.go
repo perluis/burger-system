@@ -1,3 +1,5 @@
+// Package orders define el modelo de datos para las órdenes del restaurante.
+// Maneja la creación de órdenes, agregado de items y cálculo de totales con IVA.
 package orders
 
 import (
@@ -6,33 +8,32 @@ import (
 	"time"
 )
 
-// Orden representa un pedido del cliente
+// Orden representa un pedido del cliente con sus items y totales
 type Orden struct {
 	ID         string
 	NumeroMesa int
 	TipoOrden  string // "mesa", "delivery", "para_llevar"
 	Items      []ItemOrden
-	Estado     string // "PENDIENTE", "EN_COCINA", "LISTA", "ENTREGADA"
+	Estado     string // "PENDIENTE", "EN_COCINA", "LISTA", "ENTREGADA", "CANCELADA"
 	Subtotal   float64
 	Total      float64
 	FechaHora  time.Time
 }
 
-// ItemOrden representa un item dentro de una orden
+// ItemOrden representa un producto dentro de una orden
 type ItemOrden struct {
 	HamburguesaID string
 	Nombre        string
 	Cantidad      int
 	PrecioUnit    float64
-	Notas         string // "sin cebolla", "extra queso", etc.
+	Notas         string // Ej: "sin cebolla", "extra queso"
 }
 
-// Contador para IDs de orden
+// Contador para IDs temporales de orden
 var contadorOrden = 0
 
-// NuevaOrden crea una nueva orden
+// NuevaOrden crea una orden validando el tipo
 func NuevaOrden(tipoOrden string, numeroMesa int) (*Orden, error) {
-	// Validar tipo de orden
 	tiposValidos := []string{"mesa", "delivery", "para_llevar"}
 	tipoValido := false
 	for _, tipo := range tiposValidos {
@@ -41,16 +42,13 @@ func NuevaOrden(tipoOrden string, numeroMesa int) (*Orden, error) {
 			break
 		}
 	}
-
 	if !tipoValido {
 		return nil, errors.New("tipo de orden inválido")
 	}
 
 	contadorOrden++
-	id := fmt.Sprintf("ORD-%03d", contadorOrden)
-
 	return &Orden{
-		ID:         id,
+		ID:         fmt.Sprintf("ORD-%03d", contadorOrden),
 		NumeroMesa: numeroMesa,
 		TipoOrden:  tipoOrden,
 		Items:      []ItemOrden{},
@@ -61,47 +59,39 @@ func NuevaOrden(tipoOrden string, numeroMesa int) (*Orden, error) {
 	}, nil
 }
 
-// AgregarItem agrega un item a la orden
+// AgregarItem agrega un producto a la orden y recalcula totales
 func (o *Orden) AgregarItem(hamburguesaID, nombre string, cantidad int, precioUnit float64, notas string) error {
 	if cantidad <= 0 {
 		return errors.New("la cantidad debe ser mayor a 0")
 	}
-
 	if precioUnit <= 0 {
 		return errors.New("el precio debe ser mayor a 0")
 	}
 
-	item := ItemOrden{
+	o.Items = append(o.Items, ItemOrden{
 		HamburguesaID: hamburguesaID,
 		Nombre:        nombre,
 		Cantidad:      cantidad,
 		PrecioUnit:    precioUnit,
 		Notas:         notas,
-	}
-
-	o.Items = append(o.Items, item)
+	})
 	o.calcularTotales()
-
 	return nil
 }
 
-// calcularTotales calcula el subtotal y total con IVA
+// calcularTotales suma los items y aplica IVA 15% (Ecuador)
 func (o *Orden) calcularTotales() {
 	var subtotal float64
-
 	for _, item := range o.Items {
 		subtotal += float64(item.Cantidad) * item.PrecioUnit
 	}
-
 	o.Subtotal = subtotal
-	// IVA 15% (Ecuador)
-	o.Total = subtotal * 1.15
+	o.Total = subtotal * 1.15 // IVA 15% vigente en Ecuador
 }
 
-// ActualizarEstado cambia el estado de la orden
+// ActualizarEstado cambia el estado validando que sea uno permitido
 func (o *Orden) ActualizarEstado(nuevoEstado string) error {
 	estadosValidos := []string{"PENDIENTE", "EN_COCINA", "LISTA", "ENTREGADA", "CANCELADA"}
-
 	estadoValido := false
 	for _, estado := range estadosValidos {
 		if nuevoEstado == estado {
@@ -109,16 +99,15 @@ func (o *Orden) ActualizarEstado(nuevoEstado string) error {
 			break
 		}
 	}
-
 	if !estadoValido {
 		return errors.New("estado inválido")
 	}
-
 	o.Estado = nuevoEstado
 	return nil
 }
 
-// ObtenerInfo retorna información de la orden
+// ObtenerInfo retorna información formateada de la orden.
+// Implementa la interface Informable.
 func (o *Orden) ObtenerInfo() string {
 	info := fmt.Sprintf("=== ORDEN %s ===\n", o.ID)
 	info += fmt.Sprintf("Tipo: %s\n", o.TipoOrden)
@@ -134,7 +123,6 @@ func (o *Orden) ObtenerInfo() string {
 	for i, item := range o.Items {
 		info += fmt.Sprintf("  %d. %dx %s - $%.2f",
 			i+1, item.Cantidad, item.Nombre, item.PrecioUnit*float64(item.Cantidad))
-
 		if item.Notas != "" {
 			info += fmt.Sprintf(" (%s)", item.Notas)
 		}
@@ -142,7 +130,7 @@ func (o *Orden) ObtenerInfo() string {
 	}
 
 	info += fmt.Sprintf("\nSubtotal: $%.2f\n", o.Subtotal)
-	info += fmt.Sprintf("IVA (12%%): $%.2f\n", o.Total-o.Subtotal)
+	info += fmt.Sprintf("IVA (15%%): $%.2f\n", o.Total-o.Subtotal)
 	info += fmt.Sprintf("TOTAL: $%.2f\n", o.Total)
 
 	return info
